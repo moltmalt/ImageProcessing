@@ -9,18 +9,16 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using static System.Net.Mime.MediaTypeNames;
-using AForge.Imaging;
-using AForge.Imaging.Filters;
-using AForge.Math.Geometry;
-using AForge;
 using CoinsActivity;
 using Emgu.CV;
+using Backprop;
 
 namespace ImageProcessing
 {
     public partial class Form4 : Form
     {
         Bitmap loaded, processed, imageA, imageB, resultImage;
+        NeuralNet nn;
 
         public Form4()
         {
@@ -388,6 +386,88 @@ namespace ImageProcessing
             public int count;
             public Coin(string c, float v) => (Cluster, Value) = (c, v);
             public float Total => Value * count;
+        }
+
+        private void tabPage3_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void textBox5_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button7_Click(object sender, EventArgs e)
+        {
+            nn = new NeuralNet(4, Convert.ToInt16(textBox6.Text), 1);
+
+
+        }
+
+        private void button8_Click(object sender, EventArgs e)
+        {
+            int numEpochs = Convert.ToInt16(textBox7.Text);
+
+            // Define the input combinations and corresponding AND output
+            double[,] inputCombinations = new double[,]
+            {
+            {0, 0, 0, 0},
+            {0, 0, 0, 1},
+            {0, 0, 1, 0},
+            {0, 0, 1, 1},
+            {0, 1, 0, 0},
+            {0, 1, 0, 1},
+            {0, 1, 1, 0},
+            {0, 1, 1, 1},
+            {1, 0, 0, 0},
+            {1, 0, 0, 1},
+            {1, 0, 1, 0},
+            {1, 0, 1, 1},
+            {1, 1, 0, 0},
+            {1, 1, 0, 1},
+            {1, 1, 1, 0},
+            {1, 1, 1, 1}
+            };
+
+            // Calculate the corresponding AND output
+            double[] andOutputs = new double[inputCombinations.GetLength(0)];
+            for (int i = 0; i < inputCombinations.GetLength(0); i++)
+            {
+                // Convert double to int for logical AND operation
+                int result = 1;
+                for (int j = 0; j < inputCombinations.GetLength(1); j++)
+                {
+                    result &= Convert.ToInt32(inputCombinations[i, j]);
+                }
+                andOutputs[i] = result;
+            }
+
+            // Train the neural network
+            for (int epoch = 0; epoch < numEpochs; epoch++)
+            {
+                for (int i = 0; i < inputCombinations.GetLength(0); i++)
+                {
+                    nn.setInputs(0, inputCombinations[i, 0]);
+                    nn.setInputs(1, inputCombinations[i, 1]);
+                    nn.setInputs(2, inputCombinations[i, 2]);
+                    nn.setInputs(3, inputCombinations[i, 3]);
+                    nn.setDesiredOutput(0, andOutputs[i]);
+                    nn.learn();
+                }
+            }
+        }
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+            nn.setInputs(0, Convert.ToDouble(textBox1.Text));
+            nn.setInputs(1, Convert.ToDouble(textBox2.Text));
+            nn.setInputs(2, Convert.ToDouble(textBox4.Text));
+            nn.setInputs(3, Convert.ToDouble(textBox3.Text));
+
+            nn.run();
+
+            textBox5.Text = "" + nn.getOuputData(0);
         }
     }
 }
